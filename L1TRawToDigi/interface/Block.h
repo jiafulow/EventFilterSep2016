@@ -1,5 +1,5 @@
-#ifndef Block_h
-#define Block_h
+#ifndef EventFilter_L1TRawToDigi_Block_h
+#define EventFilter_L1TRawToDigi_Block_h
 
 #include <memory>
 #include <vector>
@@ -11,17 +11,18 @@ namespace l1t {
 
    class BlockHeader {
       public:
-         BlockHeader(unsigned int id, unsigned int size, unsigned int capID=0, block_t type=MP7) : id_(id), size_(size), capID_(capID), type_(type) {};
+         BlockHeader(unsigned int id, unsigned int size, unsigned int capID=0, unsigned int flags=0, block_t type=MP7) : id_(id), size_(size), capID_(capID), flags_(flags), type_(type) {};
          // Create a MP7 block header: everything is contained in the raw uint32
-         BlockHeader(const uint32_t *data) : id_((data[0] >> ID_shift) & ID_mask), size_((data[0] >> size_shift) & size_mask), capID_((data[0] >> capID_shift) & capID_mask), type_(MP7) {};
+         BlockHeader(const uint32_t *data) : id_((data[0] >> ID_shift) & ID_mask), size_((data[0] >> size_shift) & size_mask), capID_((data[0] >> capID_shift) & capID_mask), flags_((data[0] >> flags_shift) & flags_mask), type_(MP7) {};
          // Create a CTP7 block header: size is contained in the general CTP7 header
-         BlockHeader(const uint32_t *data, unsigned int size) : id_((data[0] >> CTP7_shift) & CTP7_mask), size_(size), capID_(0), type_(CTP7) {};
+         BlockHeader(const uint32_t *data, unsigned int size) : id_((data[0] >> CTP7_shift) & CTP7_mask), size_(size), capID_(0), flags_(0), type_(CTP7) {};
 
          bool operator<(const BlockHeader& o) const { return getID() < o.getID(); };
 
          unsigned int getID() const { return id_; };
          unsigned int getSize() const { return size_; };
          unsigned int getCapID() const { return capID_; };
+         unsigned int getFlags() const { return flags_; };
          block_t getType() const { return type_; };
 
          uint32_t raw(block_t type=MP7) const;
@@ -35,10 +36,13 @@ namespace l1t {
          static const unsigned int size_mask = 0xff;
          static const unsigned int capID_shift = 8;
          static const unsigned int capID_mask = 0xff;
+         static const unsigned int flags_shift = 0;
+         static const unsigned int flags_mask = 0xff;
 
          unsigned int id_;
          unsigned int size_;
          unsigned int capID_;
+         unsigned int flags_;
          block_t type_;
    };
 
@@ -70,7 +74,7 @@ namespace l1t {
    class Payload {
       public:
          Payload(const uint32_t * data, const uint32_t * end) : data_(data), end_(end), algo_(0), infra_(0) {};
-
+         virtual ~Payload() {};
          virtual unsigned getAlgorithmFWVersion() const { return algo_; };
          virtual unsigned getInfrastructureFWVersion() const { return infra_; };
          virtual unsigned getHeaderSize() const = 0;
@@ -78,7 +82,7 @@ namespace l1t {
          // header.  Called by getBlock(), which also checks that data_ !=
          // end_ before calling (assumes size of one 32 bit word).
          virtual BlockHeader getHeader() = 0;
-         virtual std::auto_ptr<Block> getBlock();
+         virtual std::unique_ptr<Block> getBlock();
       protected:
          const uint32_t * data_;
          const uint32_t * end_;
@@ -100,7 +104,7 @@ namespace l1t {
          // Unused methods - we override getBlock() instead
          virtual unsigned getHeaderSize() const override { return 0; };
          virtual BlockHeader getHeader() override { return BlockHeader(0); };
-         virtual std::auto_ptr<Block> getBlock() override;
+         virtual std::unique_ptr<Block> getBlock() override;
       private:
          // sizes in 16 bit words
          static const unsigned int header_size = 12;

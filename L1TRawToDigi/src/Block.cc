@@ -29,7 +29,7 @@ namespace l1t {
    {
       if (type_ == MP7) {
          LogTrace("L1T") << "Writing MP7 link header";
-         return ((id_ & ID_mask) << ID_shift) | ((size_ & size_mask) << size_shift) | ((capID_ & capID_mask) << capID_shift);
+         return ((id_ & ID_mask) << ID_shift) | ((size_ & size_mask) << size_shift) | ((capID_ & capID_mask) << capID_shift) | ((flags_ & flags_mask) << flags_shift);
       }
       // if (type_ == MTF7) {
       //    LogTrace("L1T") << "Writing MTF7 link header";
@@ -39,7 +39,7 @@ namespace l1t {
       return ((id_ & CTP7_mask) << CTP7_shift);
    }
 
-   std::auto_ptr<Block>
+   std::unique_ptr<Block>
    Payload::getBlock()
    {
       if (end_ - data_ < getHeaderSize()) {
@@ -64,7 +64,7 @@ namespace l1t {
 
       LogTrace("L1T") << "Creating block with size " << header.getSize();
 
-      auto res = std::auto_ptr<Block>(new Block(header, data_, data_ + header.getSize()));
+      auto res = std::unique_ptr<Block>(new Block(header, data_, data_ + header.getSize()));
       data_ += header.getSize();
       return res;
    }
@@ -143,7 +143,7 @@ namespace l1t {
     return false;
   }
   
-  std::auto_ptr<Block>
+  std::unique_ptr<Block>
   MTF7Payload::getBlock()
   {
     if (end_ - data_ < 2)
@@ -174,7 +174,7 @@ namespace l1t {
     }
     
     data_ += (i + 1) * 2;
-    return std::auto_ptr<Block>(new Block(pattern, payload, 0, MTF7));
+    return std::unique_ptr<Block>(new Block(pattern, payload, 0, MTF7));
   }
   
    CTP7Payload::CTP7Payload(const uint32_t * data, const uint32_t * end) : Payload(data, end)
