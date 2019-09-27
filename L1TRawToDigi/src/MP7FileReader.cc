@@ -3,10 +3,8 @@
 
 #include "EventFilter/L1TRawToDigi/interface/MP7FileReader.h"
 
-//#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <iostream>
@@ -49,7 +47,7 @@ MP7FileReader::MP7FileReader(const std::string& path) : valid_(false), path_(pat
 
     LogDebug("L1T") << "# buffers " << buffers_.size();
 
-    if (buffers_.size() > 0) {
+    if (!buffers_.empty()) {
       LogDebug("L1T") << "# links " << buffers_.at(0).size();
       if (buffers_.at(0).size()>0) {
 	LogDebug("L1T") << "# frames " << buffers_.at(0).link(0).size();
@@ -73,7 +71,7 @@ std::vector<std::string>
 MP7FileReader::names() const {
     std::vector<std::string> names(buffers_.size());
     
-    BOOST_FOREACH( const FileData& r, buffers_ ) {
+    for(auto const& r : buffers_ ) {
         names.push_back(r.name());
     } 
     return names;
@@ -92,7 +90,7 @@ MP7FileReader::load() {
 
         //cout << "Links (" << links.size() << ") : ";
 
-        //BOOST_FOREACH(uint32_t l, links) {
+        //for(uint32_t l : links) {
             //cout << l << ",";
         //}
         //cout << endl;
@@ -198,7 +196,7 @@ uint64_t MP7FileReader::validStrToUint64(const std::string& token) {
     }
 
     uint64_t value = (uint64_t) (what[1] == "1") << 32;
-    value += std::stoul(what[2].str(), 0x0, 16);
+    value += std::stoul(what[2].str(), nullptr, 16);
     return value;
 }
 
